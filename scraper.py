@@ -1,18 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
-from multiprocessing import Pool
 
 
 def get_html(url):
     r = requests.get(url)
     soup = BeautifulSoup(r.text, "lxml")
     return soup
-
-
-"""
-получить ссылку на покупку билета
-Если ссылки на покупку билета нет на сайте дает поисковую сылку в гугл
-"""
 
 
 def get_ticket(link_concert):
@@ -30,17 +23,11 @@ def get_ticket(link_concert):
         return google_link
 
 
-# ________________________________________________Работа по запросу артиста______________________________________________
-"""
-Ищет артистов по запросу упаковывает в словарь с ключем имя артиста. Возможно несколько артистов.
-вход имя (если несколько слов то зменяет " " на "+"
-выход { имя артиста [код артиста, ссылка на картинку артиста ]
-"""
+# _______________________________________________Work_with_name_of_artist_______________________________________________
 
-
-def search_artist(name_artist):
-    artists_dict = {}
-    url = "https://www.songkick.com/search?utf8=%E2%9C%93&type=initial&query=" + name_artist
+def search_artist(name_artist: str) -> list:
+    artists_list = []
+    url = "https://www.songkick.com/search?utf8=%E2%9C%93&type=initial&query=" + name_artist.replace(" ", "+")
     soup = get_html(url)
     all_info = soup.find('div', class_="component search event-listings events-summary")
     all_artists = all_info.find_all('li', class_="artist")
@@ -48,38 +35,36 @@ def search_artist(name_artist):
         name = artist.find("strong").text
         link = artist.find('a', class_="thumb").get("href")[9:]
         pic = artist.find('img', class_="profile-pic artist").get("src")
-        artists_dict[name] = [link, pic]
-    return artists_dict
+        artists_list.append({"Name": name,
+                             "Artist_code": link,
+                             "Picture": pic})
+    return artists_list
 
 
-"""
-Парсер для страници артиста
-Вход: код артиста полученный от бота 
-Выход:количество концертов,{сылка на концерт[дата, концертхолл, город_страна(может принимать значение "Canceled" и "POSTPONED")}
-"""
-
-
-def concert_artist(artist_code):
-    concert = {}
+def concert_artist(artist_code: str) -> list:
+    concert_list = []
     url = "https://www.songkick.com/artists/" + artist_code
     soup = get_html(url)
-    div_inf = soup.find('div', class_=("col-8 primary artist-overview"))
+    div_inf = soup.find('div', class_="col-8 primary artist-overview")
     try:
         tour_inf = div_inf.find('ul').find('li').text.replace("On tour: ", '')
     except:
-        return "Зараз у артиста немає концертiв"
+        return []
     if tour_inf == "yes":
         calendar = get_html(url + "/calendar")
-        conc_event = calendar.find("div", class_="component events-summary upcoming")
-        upcoming_conc = conc_event.find("span", class_="title-copy").text[19:].replace(")", "")
-        conc_links = conc_event.find_all("li")
-        for conc_link in conc_links:
-            link = conc_link.find("a").get("href")
-            conc_date = conc_event.find("li", class_="event-listing").get("title")
-            conc_place = conc_link.find("strong").text
-            conc_hall = conc_link.find("p", class_="secondary-detail").text
-            concert[link] = [conc_date, conc_hall, conc_place]
-        return upcoming_conc, concert
+        concert_event = calendar.find("div", class_="component events-summary upcoming")
+        count_concerts = concert_event.find("span", class_="title-copy").text[19:].replace(")", "")
+        concert_links = concert_event.find_all("li")
+        for concert_link in concert_links:
+            link = concert_link.find("a").get("href")
+            concert_date = concert_event.find("li", class_="event-listing").get("title")
+            concert_place = concert_link.find("strong").text
+            concert_hall = concert_link.find("p", class_="secondary-detail").text
+            concert_list.append({"Link": link,
+                                 "Date": concert_date,
+                                 "Concert_hall": concert_hall,
+                                 "Place": concert_place})
+        return [count_concerts, concert_list]
 
 
 """
@@ -106,7 +91,7 @@ def past_concert(artist_code):
                 conc_place = concert.find("span", class_="venue-name").find("a").text
             except AttributeError:
                 conc_place = None
-            #conc_city = concert.find("p", "location").find("span", class_=None).text
+            # conc_city = concert_list.find("p", "location").find("span", class_=None).text
             past_concert[conc_date] = [conc_place]
     return past_concert
 
@@ -188,10 +173,7 @@ def concert_in_location(location_code, filter_by_date=None, filter_by_genre=None
     return currently_ivents, concert_location
 
 
-def main():
-    artist_code = "4769598-alison-wonderland"
-    print(concert_artist(artist_code))
-
-
 if __name__ == "__main__":
-    main()
+    artist_code = "4769598-alison-wonderland"
+    #print(concert_artist(artist_code))
+    print(search_artist("dua"))
