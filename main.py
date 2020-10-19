@@ -1,9 +1,9 @@
 import logging
 from aiogram import Bot, Dispatcher, executor, types
-import os
 import handlers
+from Keyboards.keybords import hello_keyboard
+from config import API_TOKEN
 
-API_TOKEN = os.getenv("Concert_Bot_API")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -13,7 +13,9 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
-    await message.reply("Я помогу тебе найти ближайшие концерты твоих любимых исполнителей по всему земному шару.\n Введи имя артиста")
+    await bot.send_message(message.from_user.id,
+                           "Я помогу тебе найти ближайшие концерты по всему земному шару.\n Выбери тип поиска",
+                           reply_markup=hello_keyboard)
 
 @dp.message_handler()
 async def echo(message: types.Message):

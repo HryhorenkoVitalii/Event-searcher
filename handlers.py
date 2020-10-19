@@ -1,4 +1,5 @@
-import scraper
+from Parsers import scraper
+
 
 def name_artist(name: str):
     result = ""
