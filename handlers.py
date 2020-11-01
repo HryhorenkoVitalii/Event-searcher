@@ -1,15 +1,5 @@
-from Parsers import scraper
+from Parsers.scraper import concert_artist
 
 
-def name_artist(name: str):
-    result = ""
-    artist_list = scraper.search_artist(name)
-    if len(artist_list) > 1:
-        for artist in artist_list:
-            result += f"Имя артиста{artist['Name']} "
-        return result
-    elif len(artist_list) == 1:
-        result += f"Имя артиста{artist_list[0]['Name']} "
-        return result
-    else:
-        return "Не нашло артиста"
+def get_artist_concerts(code: str):
+    concerts = concert_artist(code)

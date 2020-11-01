@@ -175,5 +175,4 @@ def concert_in_location(location_code, filter_by_date=None, filter_by_genre=None
 
 if __name__ == "__main__":
     artist_code = "4769598-alison-wonderland"
-    #print(concert_artist(artist_code))
-    print(search_artist("dua"))
+    print(concert_artist(artist_code))
