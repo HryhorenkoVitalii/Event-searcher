@@ -23,7 +23,7 @@ def get_ticket(link_concert):
         return google_link
 
 
-# _______________________________________________Work_with_name_of_artist_______________________________________________
+# __________________________________________Work_with_name_of_artist____________________________________________________
 
 def search_artist(name_artist: str) -> list:
     artists_list = []
@@ -42,6 +42,7 @@ def search_artist(name_artist: str) -> list:
 
 
 def concert_artist(artist_code: str) -> list:
+    id = 0
     concert_list = []
     url = "https://www.songkick.com/artists/" + artist_code
     soup = get_html(url)
@@ -56,27 +57,21 @@ def concert_artist(artist_code: str) -> list:
         count_concerts = concert_event.find("span", class_="title-copy").text[19:].replace(")", "")
         concert_links = concert_event.find_all("li")
         for concert_link in concert_links:
+            id += 1
             link = concert_link.find("a").get("href")
-            concert_date = concert_event.find("li", class_="event-listing").get("title")
+            concert_date = concert_link.find("time").get("datetime")
             concert_place = concert_link.find("strong").text
             concert_hall = concert_link.find("p", class_="secondary-detail").text
-            concert_list.append({"Link": link,
+            concert_list.append({'Id': id,
+                                 "Link": link,
                                  "Date": concert_date,
                                  "Concert_hall": concert_hall,
                                  "Place": concert_place})
         return [count_concerts, concert_list]
 
 
-"""
-Поиск 50 приведущих концертов 
-Вход: код артиста полученный от бота 
-выход словарь {дата[место проведения, трана ]}
----работает не всегда, еще допиливаю---
-"""
-
-
-def past_concert(artist_code):
-    past_concert = {}
+def past_concert(artist_code: str) -> list:
+    past_concert = []
     url = (f"https://www.songkick.com/artists/{artist_code}/gigography")
     soup = get_html(url)
     div_inf = soup.find("div", class_="component events-summary")
@@ -92,27 +87,23 @@ def past_concert(artist_code):
             except AttributeError:
                 conc_place = None
             # conc_city = concert_list.find("p", "location").find("span", class_=None).text
-            past_concert[conc_date] = [conc_place]
+            past_concert.append({"Data": conc_date,
+                                 "Place": conc_place})
     return past_concert
 
 
-# _____________________________________Работа по запрсу локации__________________________________________________________
-"""
-Поиск похожих на ввод пользователя локаций
-вход: ввод пользователя 
-выход: {локация: часть ссылки + код локации }
-"""
+# __________________________________________Work_with_location_of_user__________________________________________________
 
-
-def search_location(location):
-    location_dict = {}
+def search_location(location: str) -> list:
+    location_dict = []
     url = f"https://www.songkick.com/search?utf8=%E2%9C%93&query={location}"
     soup = get_html(url)
     cities = soup.find_all("li", class_="small-city")
     for city in cities:
         link = city.find("p", class_="summary").find("a").get("href")
         city = city.find("strong").text
-        location_dict[city] = link
+        location_dict.append({"City": city,
+                              "Link": link})
     return location_dict
 
 
@@ -174,5 +165,5 @@ def concert_in_location(location_code, filter_by_date=None, filter_by_genre=None
 
 
 if __name__ == "__main__":
-    artist_code = "4769598-alison-wonderland"
-    print(concert_artist(artist_code))
+    artist_code = "30543-matchbox-twenty"
+    a = concert_artist(artist_code)
