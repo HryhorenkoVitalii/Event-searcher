@@ -19,8 +19,8 @@ def buy_ticket_keyboard(concert: dict):
     return keyboard
 
 def pagination_keybord():
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).row(
-                                                            KeyboardButton("<-", callback_data="forward_page"),
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
+                                                            KeyboardButton("<", callback_data="forward_page"),
                                                             KeyboardButton("Назад", callback_data="cancel"),
-                                                            KeyboardButton("->", callback_data="next_page"))
+                                                            KeyboardButton(">", callback_data="next_page"))
     return keyboard

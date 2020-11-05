@@ -18,6 +18,13 @@ user_pagination = {}
 def get_state(message):
     return user_state[message.from_user.id]
 
+def page_number_normalise(page: int, max_page: int) -> int:
+    if page >= max_page:
+        return 0
+    elif page < 0:
+        return max_page - 1
+    else:
+        return page
 
 def make_pages(concert_list: list) -> list:
     temp_list = []
@@ -39,7 +46,8 @@ def make_pages(concert_list: list) -> list:
 async def _pagination(message):
     concerts_pages = user_pagination[message.from_user.id]["Concert"]
     page = user_pagination[message.from_user.id]["Page"]
-    max_page = len(concerts_pages)
+    max_page = user_pagination[message.from_user.id]["Max_pages"]
+
     for concert in concerts_pages[page]:
         keyboard = buy_ticket_keyboard(concert)
 
@@ -51,32 +59,47 @@ async def _pagination(message):
                                                               concert["Place"]),
                                reply_markup=keyboard)
     if max_page > 1:
+        user_state[message.from_user.id] = pagination_state
         await bot.send_message(message.from_user.id, "{}/{}".format(page + 1, max_page),
                                reply_markup=pagination_keybord())
 
 
 async def get_concert(message, concert_list):
     if concert_list is None:
+        user_state[message.from_user.id] = write_name_state
         await bot.send_message(message.from_user.id,
-                               "Концертов не найдено")
+                               "На данный момент у исполнителя нет назначеных концертов.\n"
+                               "Введите имя другого исполнителя либо команду /start для возврата в главное меню.")
     else:
+        pagination_concert_list = make_pages(concert_list[1])
         await bot.send_message(message.from_user.id,
                                "Найдено {} концертов\nБлижайшие концерты.".format(concert_list[0]))
         user_pagination[message.from_user.id] = {"Page": 0,
-                                                 "Concert": make_pages(concert_list[1])}
-        user_state[message.from_user.id] = pagination_state
+                                                 "Max_pages": len(pagination_concert_list),
+                                                 "Concert": pagination_concert_list}
         await _pagination(message)
-
-
 
 
 @dp.message_handler(commands=['start'])
 async def welcome(message: types.Message):
     user_state[message.chat.id] = start_state
     await bot.send_message(message.from_user.id,
-                           "Я помогу тебе найти ближайшие концерты по всему земному шару.Выбери тип поиска",
+                           "Я помогу тебе найти ближайшие концерты по всему земному шару. Выбери тип поиска",
                            reply_markup=hello_keyboard())
 
+
+@dp.message_handler(lambda message: get_state(message) == pagination_state)
+async def page_forward(message):
+    current_page = user_pagination[message.from_user.id]["Page"]
+    max_page = user_pagination[message.from_user.id]["Max_pages"]
+    if message.text == "<":
+        user_pagination[message.from_user.id]["Page"] = page_number_normalise(current_page-1, max_page)
+        await _pagination(message)
+    elif message.text == ">":
+        user_pagination[message.from_user.id]["Page"] = page_number_normalise(current_page+1, max_page)
+        await _pagination(message)
+    else:
+        await welcome(message)
 
 @dp.callback_query_handler(lambda x: x.data == "name")
 async def search_from_name(message):
@@ -111,7 +134,7 @@ async def choice_name(message):
 # ----------------------------------------------------------------------------------------------------------------------
 @dp.callback_query_handler(lambda x: x.data == "location")
 async def search_from_location(message):
-    await bot.send_message(message.from_user.id, message)
+    await bot.send_message(message.from_user.id, "Функция еще в разработке")
 
 
 if __name__ == '__main__':
