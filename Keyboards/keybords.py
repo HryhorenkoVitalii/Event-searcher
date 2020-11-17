@@ -14,12 +14,11 @@ def artist_name_keyboard(arists: list):
 
 def buy_ticket_keyboard(concert: dict):
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton("Купить билет",
-                                      callback_data=concert["Id"]))
+    keyboard.add(InlineKeyboardButton("Купить билет", url=f"https://www.songkick.com/{concert['Link']}"))
     return keyboard
 
 def pagination_keybord():
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).row(
                                                             KeyboardButton("<", callback_data="forward_page"),
                                                             KeyboardButton("Назад", callback_data="cancel"),
                                                             KeyboardButton(">", callback_data="next_page"))

@@ -1,4 +1,5 @@
 import logging
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from Keyboards.keybords import hello_keyboard, artist_name_keyboard, buy_ticket_keyboard, pagination_keybord
@@ -18,6 +19,7 @@ user_pagination = {}
 def get_state(message):
     return user_state[message.from_user.id]
 
+
 def page_number_normalise(page: int, max_page: int) -> int:
     if page >= max_page:
         return 0
@@ -25,6 +27,7 @@ def page_number_normalise(page: int, max_page: int) -> int:
         return max_page - 1
     else:
         return page
+
 
 def make_pages(concert_list: list) -> list:
     temp_list = []
@@ -89,17 +92,22 @@ async def welcome(message: types.Message):
 
 
 @dp.message_handler(lambda message: get_state(message) == pagination_state)
-async def page_forward(message):
+async def pagination_user(message):
     current_page = user_pagination[message.from_user.id]["Page"]
     max_page = user_pagination[message.from_user.id]["Max_pages"]
+    user_state[message.from_user.id] = buy_ticket_state
     if message.text == "<":
-        user_pagination[message.from_user.id]["Page"] = page_number_normalise(current_page-1, max_page)
+        user_pagination[message.from_user.id]["Page"] = page_number_normalise(current_page - 1, max_page)
         await _pagination(message)
     elif message.text == ">":
-        user_pagination[message.from_user.id]["Page"] = page_number_normalise(current_page+1, max_page)
+        user_pagination[message.from_user.id]["Page"] = page_number_normalise(current_page + 1, max_page)
         await _pagination(message)
     else:
+        await bot.send_message(message.from_user.id,
+                               "Возвращаюсь в главное меню.",
+                               reply_markup=types.ReplyKeyboardRemove())
         await welcome(message)
+
 
 @dp.callback_query_handler(lambda x: x.data == "name")
 async def search_from_name(message):
@@ -112,6 +120,7 @@ async def name_result(message):
     await bot.send_message(message.from_user.id, "Обрабатываю запрос, подождите")
     artist_list = search_artist(message.text)
     if len(artist_list) == 1:
+        await bot.send_message(message.from_user.id, "Результаты по запросу: {}".format(artist_list[0]["Name"]))
         user_state[message.from_user.id] = choice_concert_state
         concert_list = concert_artist(artist_list[0]["Artist_code"])
         await get_concert(message, concert_list)

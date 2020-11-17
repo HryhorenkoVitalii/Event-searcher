@@ -62,9 +62,9 @@ def concert_artist(artist_code: str) -> list:
             concert_date = concert_link.find("time").get("datetime")
             concert_place = concert_link.find("strong").text
             concert_hall = concert_link.find("p", class_="secondary-detail").text
-            concert_list.append({'Id': id,
+            concert_list.append({'Id': f"forcallback_{id}",
                                  "Link": link,
-                                 "Date": concert_date,
+                                 "Date": concert_date[:10],
                                  "Concert_hall": concert_hall,
                                  "Place": concert_place})
         return [count_concerts, concert_list]
@@ -167,3 +167,4 @@ def concert_in_location(location_code, filter_by_date=None, filter_by_genre=None
 if __name__ == "__main__":
     artist_code = "30543-matchbox-twenty"
     a = concert_artist(artist_code)
+    print(a)
