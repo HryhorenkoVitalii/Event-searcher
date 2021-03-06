@@ -7,3 +7,4 @@ def str_to_date_converter(date_str):
     else:
         data = datetime.strptime(date_str, "%d-%m-%Y %H:%M:%S")
     return data
+

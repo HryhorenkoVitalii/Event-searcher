@@ -1,19 +1,22 @@
 import logging
+from datetime import datetime
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from Keyboards.keybords import hello_keyboard, artist_name_keyboard, buy_ticket_keyboard, pagination_keybord
+from Keyboards.keybords import hello_keyboard, artist_name_keyboard, buy_ticket_keyboard, pagination_keyboard, location_keyboard
 from Parsers.scraper import search_artist, concert_artist
 from config import API_TOKEN
+import db.alchemy
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 
-start_state, choice_artist_state, choice_concert_state, write_name_state, buy_ticket_state, pagination_state = range(6)
+start_state, location_set, choice_artist_state, choice_concert_state, write_name_state, buy_ticket_state, pagination_state = range(7)
 user_state = {}
 user_pagination = {}
+
 
 
 def get_state(message):
@@ -64,7 +67,7 @@ async def _pagination(message):
     if max_page > 1:
         user_state[message.from_user.id] = pagination_state
         await bot.send_message(message.from_user.id, "{}/{}".format(page + 1, max_page),
-                               reply_markup=pagination_keybord())
+                               reply_markup=pagination_keyboard())
 
 
 async def get_concert(message, concert_list):
@@ -83,9 +86,25 @@ async def get_concert(message, concert_list):
         await _pagination(message)
 
 
+def welcome_db(telegram_id, name):
+    item = db.alchemy.session.query(db.alchemy.User).filter_by(telegram_id=telegram_id).one_or_none()
+    if item is None:
+        db_user = db.alchemy.User(telegram_id=telegram_id, name=name)
+        db.alchemy.session.add(db_user)
+        db.alchemy.session.commit()
+
+def search_db(telegram_id, artist_name):
+    user = db.alchemy.session.query(db.alchemy.User).filter_by(telegram_id=telegram_id).one_or_none()
+
+    db_search_history = db.alchemy.SearchHistory(user=user.id, search=artist_name, data=datetime.now())
+    db.alchemy.session.add(db_search_history)
+    db.alchemy.session.commit()
+
+
 @dp.message_handler(commands=['start'])
 async def welcome(message: types.Message):
-    user_state[message.chat.id] = start_state
+    user_state[message.from_user.id] = start_state
+    welcome_db(message.from_user.id, message.from_user.username)
     await bot.send_message(message.from_user.id,
                            "Я помогу тебе найти ближайшие концерты по всему земному шару. Выбери тип поиска",
                            reply_markup=hello_keyboard())
@@ -117,6 +136,7 @@ async def search_from_name(message):
 
 @dp.message_handler(lambda message: get_state(message) == write_name_state)
 async def name_result(message):
+    search_db(telegram_id=message.from_user.id, artist_name=message.text)
     await bot.send_message(message.from_user.id, "Обрабатываю запрос, подождите")
     artist_list = search_artist(message.text)
     if len(artist_list) == 1:
@@ -143,8 +163,14 @@ async def choice_name(message):
 # ----------------------------------------------------------------------------------------------------------------------
 @dp.callback_query_handler(lambda x: x.data == "location")
 async def search_from_location(message):
-    await bot.send_message(message.from_user.id, "Функция еще в разработке")
+    user_state[message.from_user.id] = location_set
+    keyboard = location_keyboard()
+    await bot.send_message(message.from_user.id, "Введите место или поделитесь локацией.", reply_markup=keyboard)
 
+@dp.message_handler(lambda message: get_state(message) == location_set)
+async def location_handler(message):
+    print(message)
+    await bot.send_message(message.from_user.id, reply_markup=types.ReplyKeyboardRemove())
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
