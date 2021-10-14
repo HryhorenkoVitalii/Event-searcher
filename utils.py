@@ -139,7 +139,7 @@ class MyUtils:
 
         def time_it(func):
             def function_wrapper(*args, **kwargs):
-                with TimeIt(logger=self.logger, text=text, func_name=func.__name__ ):
+                with TimeIt(logger=self.logger, text=text, lllllfunc_name=func.__name__ ):
                     result = func(*args, **kwargs)
                     print(func.__name__ )
                     return result
