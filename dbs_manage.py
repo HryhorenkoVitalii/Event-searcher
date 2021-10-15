@@ -73,9 +73,8 @@ class PsqlManagment:
         return data_lists
 
     def mogrify_to_db_list(self, db_credentials, to_db_list):
-        signs = '(' + ('%s,' * len(to_db_list[0]))[:-1] + ')'
-        args_str = b','.join(db_credentials["cursor"]
-                             .mogrify(signs, x) for x in to_db_list)
+        signs = f"({', '.join(['%s' for _ in range(len(to_db_list))])})"
+        args_str = db_credentials["cursor"].mogrify(signs, to_db_list)
         args_str = args_str.decode()
         return args_str
 
