@@ -4,14 +4,16 @@ from datetime import datetime
 
 class TimeIt():
     '''Execute time '''
-    def __init__(self,logger, func_name=None, text=None):
+    def __init__(self,logger, func_name=None, text=None, start_report=None):
         self.logger = logger
         self.text = text
         self.func_name = func_name
+        self.start_report = start_report
 
     def __enter__(self):
-        # self.logger.info("Time :: Start")
         self.time_now = time.time()
+        if self.start_report:
+            self.logger.info(f"Name: {self.func_name}, Time: {self.time_now} :: Start")
 
     def time_form(self, time):
         result = {"days": 0,
@@ -45,33 +47,15 @@ class TimeIt():
         print(responce_text)
         self.logger.info(responce_text)
 
-def str_to_date_converter(date_str):
-    if len(date_str) <= 10:
-        data = datetime.strptime(date_str, "%d-%m-%Y")
-    else:
-        data = datetime.strptime(date_str, "%d-%m-%Y %H:%M:%S")
-    return data
-
-
-def chunk_maker(list, number):
-    count = 0
-    result_list = []
-    temp_chunk = []
-    for item in list:
-        temp_chunk.append(item)
-        count += 1
-        if count == number:
-            result_list.append(temp_chunk)
-            temp_chunk = []
-            count = 0
-    if temp_chunk:
-        result_list.append(temp_chunk)
-    return result_list
-
 class MyUtils:
-    
-    def __init__(self, logger):
-        self.logger = logger
+
+    @staticmethod
+    def str_to_date_converter(date_str):
+        if len(date_str) <= 10:
+            data = datetime.strptime(date_str, "%d-%m-%Y")
+        else:
+            data = datetime.strptime(date_str, "%d-%m-%Y %H:%M:%S")
+        return data
 
     @staticmethod
     def chunk_maker(list, number):
@@ -88,6 +72,11 @@ class MyUtils:
         if temp_chunk:
             result_list.append(temp_chunk)
         return result_list
+
+class MyDecorators:
+    
+    def __init__(self, logger):
+        self.logger = logger
 
     def try_except_decorator(self, raise_error=True, full_traceback=False,
                            max_attempts=2, timeout=1, print_stout=False,
@@ -139,9 +128,8 @@ class MyUtils:
 
         def time_it(func):
             def function_wrapper(*args, **kwargs):
-                with TimeIt(logger=self.logger, text=text, lllllfunc_name=func.__name__ ):
+                with TimeIt(logger=self.logger, text=text, func_name=func.__name__ ):
                     result = func(*args, **kwargs)
-                    print(func.__name__ )
                     return result
             return function_wrapper
         return time_it
