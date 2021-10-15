@@ -1,14 +1,11 @@
-from try_except_decorator import TryExceptWrapper
-from logger_setup import *
-from utils import chunk_maker
+from loguru import logger as dbs_logger
+from utils import MyDecorators, MyUtils
+from settings import DEBUG_LEVEL
 import psycopg2
 
-# sys.path.append(dirname(dirname(abspath(__file__))))
-cr = 'postgresql://postgres:sacred@localhost:5432/postgres'
 
-logging_file = 'logs/logs.log'
-custom_logger = setup_logger("psql_manage_log", logging_file)
-decorators = TryExceptWrapper(custom_logger)
+dbs_logger.add('logs/dbs/logs.log', level=DEBUG_LEVEL)
+decorators = MyDecorators(dbs_logger)
 
 class ConnectionPsql:
 
@@ -16,19 +13,19 @@ class ConnectionPsql:
         self.connection = None
         self.db_credentials = db_credentials
 
-    @decorators.try_except_wrapper(full_traceback=True,
+    @decorators.try_except_decorator(full_traceback=True,
                                    max_attempts=3, raise_error=True)
     def __enter__(self) -> dict:
         self.connection = psycopg2.connect(self.db_credentials)
         if self.connection:
-            custom_logger.debug('db connection created')
+            dbs_logger.debug('db connection created')
             return {"connection": self.connection,
                     "cursor": self.connection.cursor()}
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.connection:
             self.connection.close()
-            custom_logger.debug('db connection close')
+            dbs_logger.debug('db connection close')
 
 
 class PsqlManagment:
@@ -47,7 +44,7 @@ class PsqlManagment:
             db_credentials["connection"].rollback()
             raise
 
-    @decorators.try_except_wrapper(full_traceback=True)
+    @decorators.try_except_decorator(full_traceback=True)
     def execute_psql_query(self, query, db_credentials=None):
         """
         Methods executes sql queries like delete
@@ -62,7 +59,7 @@ class PsqlManagment:
                 self.try_execute(db_credentials, query)
         return True
 
-    @decorators.try_except_wrapper(full_traceback=True)
+    @decorators.try_except_decorator(full_traceback=True)
     def sql_select(self, query):
         """
         Method executes psql select queries
@@ -112,7 +109,7 @@ class PsqlManagment:
             result_list = None
         return result_list, empty_count
 
-    def write_to_db(self, to_db_list, table_name, chunk_size=3,
+    def write_to_db(self, to_db_list, table_name, chunk_size=1000,
                     bad_case_limit=float("inf"), conflict_statement=None):
         """
         Method writes records to psql database
@@ -121,21 +118,21 @@ class PsqlManagment:
         :Return: None
         """
         bad_case_count = 0
-        custom_logger.info(
+        dbs_logger.info(
                 f"Writing to to database started table:: {table_name}"
             )
         with self.psql_connections as db_credentials:
-            for chunk in chunk_maker(to_db_list, chunk_size):
+            for chunk in MyUtils.chunk_maker(to_db_list, chunk_size):
                 chunk, empty_count = self.empty_data_checker(chunk)
                 bad_case_count += empty_count
                 written_flag = False
                 if bad_case_count >= bad_case_limit:
-                    custom_logger.error('Too many bad case')
+                    dbs_logger.error('Too many bad case')
                     break
                 if chunk:
                     mogrify_chunk = self.mogrify_to_db_list(db_credentials,
                                                             chunk)
-                    custom_logger.debug('Write chunk to db')
+                    dbs_logger.debug('Write chunk to db')
                     written_flag = self.chunk_writer(mogrify_chunk, table_name,
                                                      conflict_statement,
                                                      db_credentials)
@@ -143,7 +140,7 @@ class PsqlManagment:
                         bad_case_count += len(chunk)
                         continue
                 else:
-                    custom_logger.info("Chunk is empty")
+                    dbs_logger.info("Chunk is empty")
             return bad_case_count
 
 
