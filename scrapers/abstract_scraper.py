@@ -4,15 +4,15 @@ import requests
 from settings import *
 from dbs_manage import PsqlManagment
 from collections import defaultdict
-from loguru import logger as custom_logger
+from loguru import logger as scraper_logger
 from bs4 import BeautifulSoup
 
-logging_file = 'logs/scrapers/logs.log'
-custom_logger.add(logging_file)
+
+scraper_logger.add('logs/scrapers/logs.log', level=DEBUG_LEVEL)
 
 class AbstractScraper(ABC):
 
-        def __init__(self, logger) -> None:
+        def __init__(self, logger=scraper_logger) -> None:
             self.psql_manages = PsqlManagment(PSQL_CREDENTIAL)
             self.request_attempt = REQUEST_ATTEMPTS
             self.COUNTERS = defaultdict(int)
@@ -21,9 +21,9 @@ class AbstractScraper(ABC):
             self.request_timeout = REQUEST_TIMEOUT
             self.logger = logger
 
-        def create_psql_table(self):
-            query = f"""CREATE IF NOT EXIST TABLE {PSQL_TABLE_NAME} 
-                     ({PSQL_TABLE_STRUCTURE})"""
+        def create_psql_table(self, table_name, table_structure):
+            query = f"""CREATE IF NOT EXIST TABLE {table_name} 
+                     ({table_structure})"""
             self.psql_manages.execute_psql_query(query)
 
 
@@ -63,7 +63,7 @@ class AbstractScraper(ABC):
                 resp = self._try_except_requests_handler(url, params, allow_redirects)
                 if resp:
                     if resp.status_code in [200]:
-                        self.logger.debug(f"Request is success :: {url}")
+                        self.logger.success(f"Request is success :: {url}")
                         self.COUNTERS["Success requests"] += 1
                         return {"Request status": "Success",
                                 "Data": resp}
@@ -91,7 +91,9 @@ class AbstractScraper(ABC):
 
         def get_soup(self, url):
             html_request = self.get_request(url)["Data"]
+            # if html_request["Request status"] == "Success":
             soup = BeautifulSoup(html_request.text, 'lxml')
+            # else:
             return soup
 
         # @abstractclassmethod
@@ -106,26 +108,5 @@ class AbstractScraper(ABC):
         # def main(self):
         #     pass
 
-class Scraper(AbstractScraper):
-
-    def __init__(self):
-        super().__init__(custom_logger)
-        print("dd")
-
-
-    def parse(self):
-        print("ffff")
-
 if __name__ == '__main__':
-
-    import utils
-
-    u = utils.MyUtils(custom_logger)
-
-    # @u.time_it_decorator("TEXT")
-    # def Test():
-    #     a = Scraper()
-    #     n = a.get_request("https://www.sheetmusicdirect.com/")
-    #     print(a.COUNTERS)
-    #     print(n["Data"].text)
-    # Test()
+    print("Abstract scraper module")
