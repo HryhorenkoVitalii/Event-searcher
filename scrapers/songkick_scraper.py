@@ -1,17 +1,13 @@
-from abstract_scraper import AbstractScraper
-from logger_setup import *
+from scrapers.abstract_scraper import *
 
-logging_file = 'logs/scrapers/logs.log'
-custom_logger = setup_logger("scrapper", logging_file)
 
 class SongkickScraper(AbstractScraper):
 
-    def __init__(self, logger) -> None:
-        super().__init__(logger)
+    def __init__(self) -> None:
+        super().__init__()
 
-    def get_ticket(self, concert_endpoint: str):
-        url = "https://www.songkick.com/" + concert_endpoint
-        soup = self.get_soup(url)
+    def get_ticket(self, concert_link: str):
+        soup = self.get_soup(concert_link)
         try:
             ticket_link = soup.find('div', id="tickets").find("a", class_="buy-ticket-link").get("href")
             ticket_vendor_url = "https://www.songkick.com" + ticket_link
@@ -26,7 +22,7 @@ class SongkickScraper(AbstractScraper):
 
     # __________________________________________Work_with_name_of_artist____________________________________________________
 
-    def search_artist(self, name_artist: str) -> list:
+    def get_artist(self, name_artist: str) -> list:
         artists_list = []
         url = "https://www.songkick.com/search?utf8=%E2%9C%93&type=initial&query=" + name_artist.replace(" ", "+")
         soup = self.get_soup(url)
@@ -35,46 +31,41 @@ class SongkickScraper(AbstractScraper):
         for artist in all_artists:
             name = artist.find("strong").text
             link = artist.find('a', class_="thumb").get("href")[9:]
-            pictures = artist.find('img', class_="profile-pic artist").get("src")
+            picture_endpoint = artist.find('img', class_="profile-pic artist").get("src")
             artists_list.append({"Name": name,
                                  "Artist_code": link,
-                                 "Picture": pictures})
+                                 "Picture url": f"http:{picture_endpoint}"})
         return artists_list
 
 
-    def concert_artist(self, artist_code: str) -> list:
-        id = 0
+    def get_concert(self, artist_code: str) -> dict:
+        in_tour = False
         concert_list = []
-        url = "https://www.songkick.com/artists/" + artist_code
-        soup = self.get_soup(url)
-        div_inf = soup.find('div', class_="col-8 primary artist-overview")
-        try:
-            tour_inf = div_inf.find('ul').find('li').text.replace("On tour: ", '')
-        except:
-            return []
-        if tour_inf == "yes":
-            calendar = self.get_soup(url + "/calendar")
-            concert_event = calendar.find("div", class_="component events-summary upcoming")
+        count_concerts = 0
+        url = f"https://www.songkick.com/artists/{artist_code}/calendar"
+        html_request = self.get_request(url)["Data"]
+        if html_request.url == url:
+            in_tour = True
+            soup = BeautifulSoup(html_request.text, 'lxml')
+            concert_event = soup.find("div", class_="component events-summary upcoming")
             count_concerts = concert_event.find("span", class_="title-copy").text[19:].replace(")", "")
             concert_links = concert_event.find_all("li")
             for concert_link in concert_links:
-                id += 1
                 link = concert_link.find("a").get("href")
                 concert_date = concert_link.find("time").get("datetime")
                 concert_place = concert_link.find("strong").text
                 concert_hall = concert_link.find("p", class_="secondary-detail").text
-                concert_list.append({'Id': f"forcallback_{id}",
-                                    "Link": link,
-                                    "Date": concert_date[:10],
-                                    "Concert_hall": concert_hall,
-                                    "Place": concert_place})
-            return [count_concerts, concert_list]
+                concert_list.append({"Link": f"https://www.songkick.com{link}",
+                                     "Date": concert_date[:10],
+                                     "Concert_hall": concert_hall,
+                                     "Place": concert_place})
+        return {"In tour": in_tour,"Concert list": concert_list, "Concert count": count_concerts}
 
 
-    def past_concert(artist_code: str) -> list:
+    def past_concert(self, artist_code: str) -> list:
         past_concert = []
         url = (f"https://www.songkick.com/artists/{artist_code}/gigography")
-        soup = get_html(url)
+        soup = self.get_soup(url)
         div_inf = soup.find("div", class_="component events-summary")
         ul_inf = div_inf.find("ul", class_="event-listings")
         concerts = ul_inf.find_all("li")
@@ -167,6 +158,6 @@ class SongkickScraper(AbstractScraper):
 
 if __name__ == "__main__":
     artist_code = "30543-matchbox-twenty"
-    # scraper = SongkickScraper()
-    # concert_artist(artist_code)
+    scraper = SongkickScraper()
+    scraper.get_concert(artist_code)
     # print(a)
