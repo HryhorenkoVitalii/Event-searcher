@@ -125,7 +125,6 @@ class MyDecorators:
         return try_exc
 
     def time_it_decorator(self, text=None):
-
         def time_it(func):
             def function_wrapper(*args, **kwargs):
                 with TimeIt(logger=self.logger, text=text, func_name=func.__name__ ):

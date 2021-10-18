@@ -71,7 +71,9 @@ def get_ticket(request_from, id):
 
 
 def run_server():
+    # from waitress import serve
     create_psql_table()
+    # serve(event_scraper_api, host="0.0.0.0", port=8080)
     event_scraper_api.run()
 
 if __name__ == "__main__":

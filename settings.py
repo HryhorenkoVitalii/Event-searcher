@@ -1,9 +1,14 @@
 ##Database settings
 
 #setting psql
-PSQL_CREDENTIAL = 'postgresql://postgres:sacred@localhost:5432/postgres'
-PSQL_TABLE_NAME = ""
-PSQL_TABLE_STRUCTURE = ""
+PSQL_CREDENTIAL = ''
+PSQL_TABLE_NAME = "event_scraper_back"
+PSQL_TABLE_STRUCTURE = """request_from TEXT,
+                          id TEXT,
+                          request_type TEXT,
+                          request_data TEXT,
+                          datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+                          """
 
 
 ##Scraper settings

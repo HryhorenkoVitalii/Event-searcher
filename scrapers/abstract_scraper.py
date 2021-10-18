@@ -21,12 +21,6 @@ class AbstractScraper(ABC):
             self.request_timeout = REQUEST_TIMEOUT
             self.logger = logger
 
-        def create_psql_table(self, table_name, table_structure):
-            query = f"""CREATE IF NOT EXIST TABLE {table_name} 
-                     ({table_structure})"""
-            self.psql_manages.execute_psql_query(query)
-
-
         def _try_except_requests_handler(self, url, params, allow_redirects):
             try:
                 self.COUNTERS["Total requests"] += 1
@@ -91,22 +85,9 @@ class AbstractScraper(ABC):
 
         def get_soup(self, url):
             html_request = self.get_request(url)["Data"]
-            # if html_request["Request status"] == "Success":
             soup = BeautifulSoup(html_request.text, 'lxml')
-            # else:
             return soup
 
-        # @abstractclassmethod
-        # def main_parse(self):
-        #     pass
-        
-        # @abstractclassmethod
-        # def save_data(self):
-        #     pass
-
-        # @abstractclassmethod
-        # def main(self):
-        #     pass
 
 if __name__ == '__main__':
     print("Abstract scraper module")

@@ -1,52 +1,46 @@
 
 <h1 align="center">
    <br>
-  <a><img src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fgiphy.com%2Fexplore%2Fdj-crowd&psig=AOvVaw3KpAR54zDuDLfW6voArVQC&ust=1634312185746000&source=images&cd=vfe&ved=0CAkQjRxqFwoTCNjC98CdyvMCFQAAAAAdAAAAABAD" width="250"></a>
+  <a><img src="https://kidfromthe6ix.files.wordpress.com/2014/10/concert-crowd-fireworks-gif-lights-favim-com-292862.gif" width="250"></a>
   <br>
   <br>
-  The Concert search
+  Evants scraper back
   <br>
 </h1>
 
-<h4 align="center">The Concert search backend</h4>
-Forum core with API data management
+<h4 align="center">The Evants scraper backend</h4>
+The scraper with REST interface for scraping concerts 
 
-### Fast start
-
-To clone and run this application, you'll need [Git](https://git-scm.com). 
-From your command line:
-
-```bash
-# Clone this repository
-$ git clone https://github.com/HryhorenkoVitalii/Core-for-forum.git
-
-
-```
+### start
+For start server you need run app.py, beforehand setting up postgres credential at settings.py
 
 ### API endpoints
+For all requests need send X-API-KEY in headers - default X-API-KEY = password
 ```bash
-# GET to view all users, POST to creae new.
-/api/v1/user/
+# [GET] to search the artist for artist name.
+# Structure responce [{Name: Artist name, 
+#                      Artist code: artist code, 
+#                      Picture url: picture url}, ...]
+# Responce can have multiple dicts
+/<request_from>/<id>/search_artist/?Artist name=<Artist name>
 
-# GET to view users id=pk, PUT to update user, DELETE to delete user.
-api/v1/user/<int:pk>
+# [GET] to search events for artist code.
+# Structure responce [{Link: Link,
+#                      Date: Date,
+#                      Concert hall: concert hall,
+#                      Place: concert place}), ...]
+# Responce can have multiple dicts
+/<request_from>/<id>/search_events/?Artist code=<Artist code>
 
-# GET to view all posts, POST to creae post.
-api/v1/post/
-
-# GET to view post id=pk, PUT to update post, DELETE to delete post.
-api/v1/user/<int:pk>
-
-# GET to view all comments, POST to creae comment.
-api/v1/comment/
-
-# GET to view comment id=pk, PUT to update comment, DELETE to delete pomment.
-api/v1/comment/<int:pk>
+# [GET] to get link for buy ticet on event.
+# Structure responce {Ticket url: ticker url}
+/<request_from>/<id>/get_ticket/?Concert Link=<Concert Link>
 ```
 
 ## Credits
 
 This software uses the following open source packages:
 
-- [Django](https://www.djangoproject.com/)
-- [djangorestframework](https://www.django-rest-framework.org/)
+- [Flask](https://flask.palletsprojects.com/)
+- [Loguru](https://loguru.readthedocs.io/)
+- [Psycopg2](https://www.psycopg.org/)
