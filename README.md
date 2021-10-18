@@ -4,11 +4,11 @@
   <a><img src="https://kidfromthe6ix.files.wordpress.com/2014/10/concert-crowd-fireworks-gif-lights-favim-com-292862.gif" width="250"></a>
   <br>
   <br>
-  Evants scraper back
+  Events scraper back
   <br>
 </h1>
 
-<h4 align="center">The Evants scraper backend</h4>
+<h4 align="center">The Events scraper backend</h4>
 The scraper with REST interface for scraping concerts 
 
 ### start
