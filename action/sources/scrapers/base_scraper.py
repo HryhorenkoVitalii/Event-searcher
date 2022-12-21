@@ -1,21 +1,16 @@
-from abc import ABC, abstractclassmethod
 from requests.exceptions import SSLError, ProxyError, Timeout, ConnectionError
 import requests
-from settings import *
-from dbs_manage import PsqlManagment
 from collections import defaultdict
-from loguru import logger as scraper_logger
+from loguru import logger 
 from bs4 import BeautifulSoup
+from action.interface import ApiInterface
 
 
-scraper_logger.add('logs/scrapers/logs.log', level=DEBUG_LEVEL)
+class BaseScraper(ApiInterface):
 
-class AbstractScraper(ABC):
-
-        def __init__(self, logger=scraper_logger) -> None:
-            self.psql_manages = PsqlManagment(PSQL_CREDENTIAL)
+        def __init__(self, logger=logger) -> None:
             self.request_attempt = REQUEST_ATTEMPTS
-            self.COUNTERS = defaultdict(int)
+            self.COUNTERS:dict[str, int] = defaultdict(int)
             self.headers = REQUEST_HEADERS
             self.proxy = PROXY
             self.request_timeout = REQUEST_TIMEOUT
@@ -88,6 +83,6 @@ class AbstractScraper(ABC):
             soup = BeautifulSoup(html_request.text, 'lxml')
             return soup
 
-
-if __name__ == '__main__':
-    print("Abstract scraper module")
+        def get_artists(self, artist_name: str):pass
+        
+        def get_concerts(self, artist_name: str):pass

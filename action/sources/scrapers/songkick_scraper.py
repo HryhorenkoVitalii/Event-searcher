@@ -1,28 +1,12 @@
-from scrapers.abstract_scraper import *
+from .base_scraper import BaseScraper
 
 
-class SongkickScraper(AbstractScraper):
+class SongkickScraper(BaseScraper):
 
     def __init__(self) -> None:
         super().__init__()
 
-    def get_ticket(self, concert_link: str):
-        soup = self.get_soup(concert_link)
-        try:
-            ticket_link = soup.find('div', id="tickets").find("a", class_="buy-ticket-link").get("href")
-            ticket_vendor_url = "https://www.songkick.com" + ticket_link
-            return ticket_vendor_url
-        except:
-            data_search = soup.find("div", class_="date-and-name").text.replace("\n", "").replace(" ", "+")
-            name_search = soup.find("h1", class_="h0 summary").text.replace("\n", "").replace(" ", "+")
-            location_search = soup.find("div", class_="location").text.replace("\n", "").replace(" ", "+").replace(" ", "+")
-            google_link = f"https://www.google.com/search?q={data_search}++{name_search}++{location_search}"
-            return google_link
-
-
-    # __________________________________________Work_with_name_of_artist____________________________________________________
-
-    def get_artist(self, name_artist: str) -> list:
+    def get_artists(self, name_artist: str) -> list:
         artists_list = []
         url = "https://www.songkick.com/search?utf8=%E2%9C%93&type=initial&query=" + name_artist.replace(" ", "+")
         soup = self.get_soup(url)
@@ -38,7 +22,7 @@ class SongkickScraper(AbstractScraper):
         return artists_list
 
 
-    def get_concert(self, artist_code: str) -> dict:
+    def get_concerts(self, artist_code: str) -> dict:
         in_tour = False
         concert_list = []
         count_concerts = 0
@@ -62,25 +46,36 @@ class SongkickScraper(AbstractScraper):
         return {"In tour": in_tour,"Concert list": concert_list, "Concert count": count_concerts}
 
 
-    def past_concert(self, artist_code: str) -> list:
-        past_concert = []
-        url = (f"https://www.songkick.com/artists/{artist_code}/gigography")
-        soup = self.get_soup(url)
-        div_inf = soup.find("div", class_="component events-summary")
-        ul_inf = div_inf.find("ul", class_="event-listings")
-        concerts = ul_inf.find_all("li")
-        count = 0
-        for concert in concerts:
-            count += 1
-            if count % 2 == 0:
-                conc_date = concert.get("title")
-                try:
-                    conc_place = concert.find("span", class_="venue-name").find("a").text
-                except AttributeError:
-                    conc_place = None
-                past_concert.append({"Data": conc_date,
-                                    "Place": conc_place})
-        return past_concert
 
-if __name__ == "__main__":
-    print("Soundkick scraper module")
+    # def past_concert(self, artist_code: str) -> list:
+    #     past_concert = []
+    #     url = (f"https://www.songkick.com/artists/{artist_code}/gigography")
+    #     soup = self.get_soup(url)
+    #     div_inf = soup.find("div", class_="component events-summary")
+    #     ul_inf = div_inf.find("ul", class_="event-listings")
+    #     concerts = ul_inf.find_all("li")
+    #     count = 0
+    #     for concert in concerts:
+    #         count += 1
+    #         if count % 2 == 0:
+    #             conc_date = concert.get("title")
+    #             try:
+    #                 conc_place = concert.find("span", class_="venue-name").find("a").text
+    #             except AttributeError:
+    #                 conc_place = None
+    #             past_concert.append({"Data": conc_date,
+    #                                 "Place": conc_place})
+    #     return past_concert
+
+    # def get_ticket(self, concert_link: str):
+    #     soup = self.get_soup(concert_link)
+    #     try:
+    #         ticket_link = soup.find('div', id="tickets").find("a", class_="buy-ticket-link").get("href")
+    #         ticket_vendor_url = "https://www.songkick.com" + ticket_link
+    #         return ticket_vendor_url
+    #     except:
+    #         data_search = soup.find("div", class_="date-and-name").text.replace("\n", "").replace(" ", "+")
+    #         name_search = soup.find("h1", class_="h0 summary").text.replace("\n", "").replace(" ", "+")
+    #         location_search = soup.find("div", class_="location").text.replace("\n", "").replace(" ", "+").replace(" ", "+")
+    #         google_link = f"https://www.google.com/search?q={data_search}++{name_search}++{location_search}"
+    #         return google_link
