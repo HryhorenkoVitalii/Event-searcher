@@ -2,6 +2,7 @@ from .default import DefaultResponse
 from pydantic import BaseModel
 
 class ArtistDataResponse(BaseModel):
+    id: int
     name: str
     soundkick_code: str
     picture_url: str
@@ -11,7 +12,7 @@ class ConcertDataResponse(BaseModel):
     url: str
     date: str
     city: str
-    country: str
+    concert_hall: str
 
 class DefaultApiResponse(DefaultResponse):
-    payload: list[ArtistDataResponse] or list[ConcertDataResponse]
+    payload: list[ArtistDataResponse] | list[ConcertDataResponse]

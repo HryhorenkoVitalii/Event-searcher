@@ -1,1 +1,1 @@
-from .entity import ArtistData, ConcertData
+from .entity import ArtistData, ConcertData, ClientRequest

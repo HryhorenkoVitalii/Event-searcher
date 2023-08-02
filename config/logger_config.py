@@ -1,7 +1,7 @@
 import os
 from typing import Final, cast
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class LoggerConfig(BaseSettings):
